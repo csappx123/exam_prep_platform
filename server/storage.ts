@@ -25,12 +25,14 @@ export interface IStorage {
   
   // Section operations
   getSectionsByExamId(examId: number): Promise<Section[]>;
+  getAllSectionIds(): Promise<number[]>;
   createSection(section: InsertSection): Promise<Section>;
   updateSection(sectionId: number, sectionData: Partial<Section>): Promise<Section | undefined>;
   deleteSection(sectionId: number): Promise<boolean>;
   
   // Question operations
   getQuestionsBySectionId(sectionId: number): Promise<Question[]>;
+  getQuestionById(questionId: number): Promise<Question | undefined>;
   createQuestion(question: InsertQuestion): Promise<Question>;
   updateQuestion(questionId: number, questionData: Partial<Question>): Promise<Question | undefined>;
   deleteQuestion(questionId: number): Promise<boolean>;
@@ -51,13 +53,14 @@ export interface IStorage {
   // Answer operations
   getUserAnswersByAttemptId(attemptId: number): Promise<UserAnswer[]>;
   createUserAnswer(answer: InsertUserAnswer): Promise<UserAnswer>;
+  updateUserAnswer(answerId: number, answerData: Partial<UserAnswer>): Promise<UserAnswer | undefined>;
   
   // Notification operations
   getUserNotifications(userId: number): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationAsRead(notificationId: number): Promise<boolean>;
   
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Use 'any' to avoid type issues
 }
 
 export class MemStorage implements IStorage {
@@ -102,31 +105,6 @@ export class MemStorage implements IStorage {
     
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
-    });
-    
-    // Add sample users
-    this.createUser({
-      username: "Admin User",
-      email: "admin@example.com",
-      password: "your_hashed_password",
-      dateOfBirth: new Date("1990-01-01"),
-      role: "admin"
-    });
-    
-    this.createUser({
-      username: "Test User",
-      email: "test@example.com",
-      password: "your_hashed_password",
-      dateOfBirth: new Date("1995-05-15"),
-      role: "user"
-    });
-    
-    this.createUser({
-      username: "CSI User",
-      email: "csi@it.com",
-      password: "your_hashed_password",
-      dateOfBirth: new Date("2000-12-25"),
-      role: "teacher"
     });
   }
   
@@ -215,6 +193,10 @@ export class MemStorage implements IStorage {
       .sort((a, b) => a.position - b.position);
   }
   
+  async getAllSectionIds(): Promise<number[]> {
+    return Array.from(this.sectionsMap.keys());
+  }
+  
   async createSection(section: InsertSection): Promise<Section> {
     const sectionId = this.sectionIdCounter++;
     const createdAt = new Date();
@@ -241,6 +223,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.questionsMap.values())
       .filter(question => question.sectionId === sectionId)
       .sort((a, b) => a.position - b.position);
+  }
+  
+  async getQuestionById(questionId: number): Promise<Question | undefined> {
+    return this.questionsMap.get(questionId);
   }
   
   async createQuestion(question: InsertQuestion): Promise<Question> {

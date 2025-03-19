@@ -31,7 +31,7 @@ async function createAdminUser() {
       email: "admin@meritorious.edu",
       password: hashedPassword,
       role: "admin",
-      dateOfBirth: new Date("1990-01-01")
+      dateOfBirth: "1990-01-01" // Use string format for date
     });
     
     console.log("Admin user created successfully:");
@@ -65,7 +65,7 @@ async function createRegularUser() {
       email: "user@meritorious.edu",
       password: hashedPassword,
       role: "user",
-      dateOfBirth: new Date("1995-05-05")
+      dateOfBirth: "1995-05-05" // Use string format for date
     });
     
     console.log("Regular user created successfully:");

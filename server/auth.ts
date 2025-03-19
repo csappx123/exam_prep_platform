@@ -30,12 +30,13 @@ async function comparePasswords(supplied: string, stored: string) {
 
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "meritorious_exam_platform_secret",
+    secret: process.env.SESSION_SECRET || 'meritorious-secret-key',
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
     cookie: {
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
   };
 
@@ -45,20 +46,21 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(
-      { usernameField: 'email' },
-      async (email, password, done) => {
-        try {
-          const user = await storage.getUserByEmail(email);
-          if (!user || !(await comparePasswords(password, user.password))) {
-            return done(null, false, { message: "Invalid email or password" });
-          }
+    new LocalStrategy({
+      usernameField: 'email',
+      passwordField: 'password'
+    }, async (email, password, done) => {
+      try {
+        const user = await storage.getUserByEmail(email);
+        if (!user || !(await comparePasswords(password, user.password))) {
+          return done(null, false, { message: "Invalid email or password" });
+        } else {
           return done(null, user);
-        } catch (err) {
-          return done(err);
         }
+      } catch (error) {
+        return done(error);
       }
-    )
+    }),
   );
 
   passport.serializeUser((user, done) => done(null, user.id));
@@ -66,43 +68,50 @@ export function setupAuth(app: Express) {
     try {
       const user = await storage.getUser(id);
       done(null, user);
-    } catch (err) {
-      done(err);
+    } catch (error) {
+      done(error);
     }
   });
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { email, username } = req.body;
+      const { email, username, password, dateOfBirth } = req.body;
       
-      // Check if user with email already exists
+      // Validate required fields
+      if (!email || !username || !password) {
+        return res.status(400).json({ message: "Email, username, and password are required" });
+      }
+      
+      // Check if email already exists
       const existingUserByEmail = await storage.getUserByEmail(email);
       if (existingUserByEmail) {
         return res.status(400).json({ message: "Email already in use" });
       }
       
-      // Check if username is taken
+      // Check if username already exists
       const existingUserByUsername = await storage.getUserByUsername(username);
       if (existingUserByUsername) {
-        return res.status(400).json({ message: "Username already taken" });
+        return res.status(400).json({ message: "Username already in use" });
       }
       
       // Hash password
-      const hashedPassword = await hashPassword(req.body.password);
+      const hashedPassword = await hashPassword(password);
       
-      // Create new user
+      // Create user
       const user = await storage.createUser({
-        ...req.body,
+        username,
+        email,
         password: hashedPassword,
+        role: "user", // Default role
+        dateOfBirth: new Date(dateOfBirth),
       });
-
-      // Remove password from response
-      const { password, ...userWithoutPassword } = user;
       
-      // Login the user
+      // Removing password from response
+      const { password: _, ...userWithoutPassword } = user;
+      
       req.login(user, (err) => {
         if (err) return next(err);
-        res.status(201).json(userWithoutPassword);
+        return res.status(201).json(userWithoutPassword);
       });
     } catch (error) {
       next(error);
@@ -112,13 +121,14 @@ export function setupAuth(app: Express) {
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
       if (err) return next(err);
-      if (!user) return res.status(401).json({ message: info?.message || "Authentication failed" });
+      if (!user) return res.status(401).json(info);
       
       req.login(user, (loginErr) => {
         if (loginErr) return next(loginErr);
         
         // Remove password from response
         const { password, ...userWithoutPassword } = user;
+        
         return res.status(200).json(userWithoutPassword);
       });
     })(req, res, next);
@@ -127,82 +137,20 @@ export function setupAuth(app: Express) {
   app.post("/api/logout", (req, res, next) => {
     req.logout((err) => {
       if (err) return next(err);
-      res.sendStatus(200);
+      req.session.destroy((sessionErr) => {
+        if (sessionErr) return next(sessionErr);
+        res.clearCookie("connect.sid");
+        return res.sendStatus(200);
+      });
     });
   });
 
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
     
     // Remove password from response
     const { password, ...userWithoutPassword } = req.user;
+    
     res.json(userWithoutPassword);
-  });
-  
-  app.post("/api/forgot-password", async (req, res) => {
-    try {
-      const { email, dateOfBirth } = req.body;
-      
-      // Find user by email
-      const user = await storage.getUserByEmail(email);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      // Verify date of birth
-      const userDOB = new Date(user.dateOfBirth).toISOString().split('T')[0];
-      const requestDOB = new Date(dateOfBirth).toISOString().split('T')[0];
-      
-      if (userDOB !== requestDOB) {
-        return res.status(400).json({ message: "Date of birth does not match" });
-      }
-      
-      // Generate reset token
-      const resetToken = randomBytes(32).toString("hex");
-      const resetTokenExpires = new Date(Date.now() + 3600000); // 1 hour
-      
-      // Update user with reset token
-      await storage.updateUser(user.id, {
-        resetToken,
-        resetTokenExpires
-      });
-      
-      // In a real application, send an email with the reset link
-      // For now, just return the token in the response
-      res.json({ 
-        message: "Password reset token generated", 
-        resetToken 
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.post("/api/reset-password", async (req, res) => {
-    try {
-      const { resetToken, newPassword } = req.body;
-      
-      // Find user by reset token
-      const user = Array.from(await storage.getAllUsers())
-        .find(u => u.resetToken === resetToken && u.resetTokenExpires && u.resetTokenExpires > new Date());
-      
-      if (!user) {
-        return res.status(400).json({ message: "Invalid or expired reset token" });
-      }
-      
-      // Hash new password
-      const hashedPassword = await hashPassword(newPassword);
-      
-      // Update user with new password and clear reset token
-      await storage.updateUser(user.id, {
-        password: hashedPassword,
-        resetToken: null,
-        resetTokenExpires: null
-      });
-      
-      res.json({ message: "Password reset successful" });
-    } catch (error) {
-      res.status(500).json({ message: "Server error" });
-    }
   });
 }

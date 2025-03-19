@@ -202,7 +202,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const questionData = insertQuestionSchema.parse(req.body);
       
       // Check if section exists and user has permission
-      const section = await storage.sectionsMap.get(questionData.sectionId);
+      const sections = await storage.getSectionsByExamId(questionData.sectionId);
+      const section = sections.find(s => s.sectionId === questionData.sectionId);
       if (!section) {
         return res.status(404).json({ message: "Section not found" });
       }
@@ -228,9 +229,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const optionData = insertOptionSchema.parse(req.body);
       
-      // Check if question exists
-      const question = await storage.questionsMap.get(optionData.questionId);
-      if (!question) {
+      // Check if question exists - get from a section that contains this question
+      const sections = await storage.getAllSectionIds();
+      let questionFound = false;
+      
+      for (const sectionId of sections) {
+        const questions = await storage.getQuestionsBySectionId(sectionId);
+        const question = questions.find(q => q.questionId === optionData.questionId);
+        if (question) {
+          questionFound = true;
+          break;
+        }
+      }
+      
+      if (!questionFound) {
         return res.status(404).json({ message: "Question not found" });
       }
       

@@ -13,7 +13,7 @@ import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import TestCard from "@/components/test/test-card";
-import { ArrowLeft, Plus, AlignJustify, Clock, CalendarClock, Info, HelpCircle } from "lucide-react";
+import { ArrowLeft, Plus, AlignJustify, Clock, CalendarClock, Info, HelpCircle, FileText } from "lucide-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";

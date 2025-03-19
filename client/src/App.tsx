@@ -13,6 +13,7 @@ import TestResultsPage from "@/pages/tests/results";
 import UsersPage from "@/pages/admin/users";
 import TestManagementPage from "@/pages/admin/test-management";
 import QuestionBankPage from "@/pages/admin/question-bank";
+import ProfilePage from "@/pages/profile";
 
 function Router() {
   return (

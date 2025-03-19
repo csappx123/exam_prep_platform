@@ -30,7 +30,7 @@ export default function TestsPage() {
   const [sortBy, setSortBy] = useState("publishDate");
   
   // Fetch tests from the API
-  const { data: tests, isLoading } = useQuery({
+  const { data: apiTests, isLoading } = useQuery({
     queryKey: ["/api/exams"],
     staleTime: 60 * 1000 // 1 minute
   });
@@ -84,12 +84,24 @@ export default function TestsPage() {
     }
   ];
   
-  const testsToDisplay = tests || sampleTests;
+  // Transform API data to match our Test type format
+  const transformedTests = apiTests ? apiTests.map((exam: any) => ({
+    id: exam.examId,
+    name: exam.examName || "",
+    description: exam.description || "",
+    duration: exam.duration || 0,
+    // We don't have question count in the API, estimate based on sections if available
+    questionCount: 0,
+    publishDate: exam.publishDate || new Date().toISOString(),
+    status: exam.isActive ? "active" : "draft"
+  })) : [];
+  
+  const testsToDisplay = transformedTests.length > 0 ? transformedTests : sampleTests;
   
   // Filter tests by search term
   const filteredTests = testsToDisplay.filter(test => 
     test.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    test.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (test.description && test.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
   // Sort tests by selected criterion

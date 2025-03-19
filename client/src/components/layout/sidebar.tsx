@@ -26,17 +26,17 @@ const SidebarItem = ({ href, icon, children, onClick }: SidebarItemProps) => {
 
   return (
     <Link href={href}>
-      <a
+      <div
         onClick={onClick}
         className={cn(
-          "block px-4 py-2 rounded-lg mb-1 flex items-center",
+          "block px-4 py-2 rounded-lg mb-1 flex items-center cursor-pointer",
           active
             ? "bg-primary bg-opacity-10 text-primary font-medium"
             : "text-gray-700 hover:bg-gray-100"
         )}
       >
         <span className="mr-2 w-5 text-center">{icon}</span> {children}
-      </a>
+      </div>
     </Link>
   );
 };

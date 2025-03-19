@@ -1,0 +1,181 @@
+-- Database: exam_prep_platform
+-- Description: Schema for the Meritorious Exam Preparation Platform
+-- Author: System Administrator
+-- Last Updated: 2024-03-09
+
+-- Drop database if exists and create new
+DROP DATABASE IF EXISTS exam_prep_platform;
+CREATE DATABASE exam_prep_platform;
+USE exam_prep_platform;
+
+-- Users Table
+-- Stores user account information
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    date_of_birth DATE NOT NULL,
+    role VARCHAR(50) DEFAULT 'user',
+    profile_image VARCHAR(255),
+    reset_token VARCHAR(255),
+    reset_token_expires DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX email_index (email),
+    INDEX username_dob_index (username, date_of_birth)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Sessions Table
+-- Stores session information for authenticated users
+CREATE TABLE sessions (
+    session_id VARCHAR(128) NOT NULL PRIMARY KEY,
+    expires BIGINT,
+    data TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Exams Table
+-- Stores information about available exams
+CREATE TABLE exams (
+    exam_id INT AUTO_INCREMENT PRIMARY KEY,
+    exam_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    duration INT NOT NULL, -- in minutes
+    instructions TEXT,
+    publish_date DATETIME,
+    is_active BOOLEAN DEFAULT true,
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    INDEX exam_name_index (exam_name),
+    INDEX publish_date_index (publish_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Sections Table
+-- Stores exam sections
+CREATE TABLE sections (
+    section_id INT AUTO_INCREMENT PRIMARY KEY,
+    exam_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    position INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (exam_id) REFERENCES exams(exam_id) ON DELETE CASCADE,
+    INDEX exam_section_index (exam_id, position)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Questions Table
+-- Stores questions for exam sections
+CREATE TABLE questions (
+    question_id INT AUTO_INCREMENT PRIMARY KEY,
+    section_id INT NOT NULL,
+    question_type ENUM('mcq', 'true_false', 'fill_in') NOT NULL,
+    question_text TEXT NOT NULL,
+    solution_text TEXT,
+    correct_answer VARCHAR(255),
+    position INT NOT NULL,
+    marks DECIMAL(5,2) DEFAULT 1.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (section_id) REFERENCES sections(section_id) ON DELETE CASCADE,
+    INDEX section_question_index (section_id, position)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Options Table
+-- Stores options for MCQ questions
+CREATE TABLE options (
+    option_id INT AUTO_INCREMENT PRIMARY KEY,
+    question_id INT NOT NULL,
+    option_text TEXT NOT NULL,
+    is_correct BOOLEAN DEFAULT false,
+    position INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE,
+    INDEX question_option_index (question_id, position)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- User Exam Attempts Table
+-- Stores user attempts at exams
+CREATE TABLE user_exam_attempts (
+    attempt_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    exam_id INT NOT NULL,
+    start_time DATETIME NOT NULL,
+    end_time DATETIME,
+    score DECIMAL(5,2),
+    status ENUM('in_progress', 'completed', 'abandoned') DEFAULT 'in_progress',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (exam_id) REFERENCES exams(exam_id),
+    INDEX user_exam_index (user_id, exam_id),
+    INDEX attempt_status_index (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- User Answers Table
+-- Stores user answers for each question
+CREATE TABLE user_answers (
+    answer_id INT AUTO_INCREMENT PRIMARY KEY,
+    attempt_id INT NOT NULL,
+    question_id INT NOT NULL,
+    user_answer TEXT,
+    is_correct BOOLEAN,
+    marks_obtained DECIMAL(5,2) DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (attempt_id) REFERENCES user_exam_attempts(attempt_id) ON DELETE CASCADE,
+    FOREIGN KEY (question_id) REFERENCES questions(question_id),
+    INDEX attempt_answer_index (attempt_id, question_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Notifications Table
+-- Stores user notifications
+CREATE TABLE notifications (
+    notification_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    type VARCHAR(50) DEFAULT 'info',
+    is_read BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX user_notification_index (user_id, is_read)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Sample Data --
+
+-- Insert test users
+INSERT INTO users (username, email, password, date_of_birth, role) VALUES
+('Admin User', 'admin@example.com', '$2b$10$YOUR_HASHED_PASSWORD', '1990-01-01', 'admin'),
+('Test User', 'test@example.com', '$2b$10$YOUR_HASHED_PASSWORD', '1995-05-15', 'user'),
+('CSI User', 'csi@it.com', '$2b$10$YOUR_HASHED_PASSWORD', '2000-12-25', 'user');
+
+-- Comments --
+
+/*
+Table Relationships:
+- users 1:N exams (created_by)
+- users 1:N user_exam_attempts
+- users 1:N notifications
+- exams 1:N sections
+- sections 1:N questions
+- questions 1:N options (for MCQ)
+- user_exam_attempts 1:N user_answers
+- questions 1:N user_answers
+
+Security Features:
+- Passwords are hashed using bcrypt
+- Session management with expiration
+- Password reset functionality with tokens
+- Role-based access control
+
+Indexes:
+- Email index for quick user lookup
+- Username and DOB index for password recovery
+- Various foreign key indexes for relationships
+- Position indexes for ordered items (sections, questions, options)
+
+Notes:
+- All tables use InnoDB engine for transaction support
+- UTF8MB4 character set for full Unicode support
+- Timestamps for audit trails
+- Soft deletes can be added if needed
+*/ 

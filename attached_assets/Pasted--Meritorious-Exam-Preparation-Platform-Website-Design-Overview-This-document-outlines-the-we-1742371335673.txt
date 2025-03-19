@@ -1,0 +1,358 @@
+# Meritorious Exam Preparation Platform - Website Design
+
+## Overview
+
+This document outlines the website design, navigation structure, and features for the Meritorious Exam Preparation Platform. It serves as a reference for developers working on the project.
+
+## Site Structure
+
+```
+├── Public Pages
+│   ├── Home/Landing Page
+│   ├── Login
+│   ├── Register
+│   └── Forgot Password
+│
+├── User Dashboard
+│   ├── Tests List
+│   ├── Test Taking Interface
+│   ├── Results & Performance
+│   ├── Profile Management
+│   └── Notifications
+│
+└── Admin Dashboard
+    ├── User Management
+    ├── Test Management
+    ├── Question Bank
+    ├── Reports & Analytics
+    └── System Settings
+```
+
+## Navigation Structure
+
+### Main Navigation (All Users)
+
+- **Logo** - Links to home/dashboard
+- **Tests** - View available tests
+- **Profile** - User profile and settings
+- **Notifications** - View notifications
+- **Logout** - End session
+
+### Admin Navigation (Additional)
+
+- **Dashboard** - Admin overview
+- **Users** - User management
+- **Tests** - Test management
+- **Questions** - Question bank
+- **Reports** - Analytics and reporting
+- **Settings** - System configuration
+
+## Page Designs
+
+### 1. Public Pages
+
+#### 1.1 Login Page (`/login`)
+- Email input
+- Password input
+- Remember me checkbox
+- Forgot password link
+- Register link for new users
+
+#### 1.2 Register Page (`/register`)
+- Username input
+- Email input
+- Date of birth input
+- Password input
+- Confirm password input
+- Terms and conditions checkbox
+
+#### 1.3 Forgot Password Page (`/forgot-password`)
+- Username input
+- Date of birth input
+- Submit button
+- Login link
+
+### 2. User Dashboard
+
+#### 2.1 Tests List Page (`/tests`)
+- List of available tests
+- Test cards showing:
+  - Test name
+  - Duration
+  - Availability date
+  - Take test button
+- Filtering and sorting options
+
+#### 2.2 Test Taking Interface (`/tests/take/:id`)
+- Test information header
+- Timer
+- Question display
+- Answer options
+- Navigation between questions
+- Submit test button
+
+#### 2.3 Results Page (`/tests/results/:id`)
+- Score summary
+- Correct/incorrect breakdown
+- Question review
+- Performance analytics
+- Share results option
+
+#### 2.4 Profile Page (`/profile`)
+- User information
+- Profile picture upload
+- Account settings
+- Password change
+- Email preferences
+
+#### 2.5 Notifications Page (`/notifications`)
+- List of notifications
+- Read/unread status
+- Notification filters
+- Mark all as read button
+
+### 3. Admin Dashboard
+
+#### 3.1 Admin Overview (`/admin/dashboard`)
+- System statistics
+- Recent activity
+- Quick access to common tasks
+- Performance metrics
+
+#### 3.2 User Management (`/admin/users`)
+- User list with search and filters
+- User details view
+- Create/edit/delete users
+- Role management
+- Account status controls
+
+#### 3.3 Test Management (`/admin/tests`)
+- Test list with search and filters
+- Create new test button
+- Edit/delete test options
+- Test status controls
+- Publish/unpublish options
+
+#### 3.4 Test Editor (`/admin/tests/edit/:id`)
+- Test details form
+- Section management
+- Question management
+- Preview option
+- Save and publish controls
+
+#### 3.5 Question Bank (`/admin/questions`)
+- Question list with search and filters
+- Create new question button
+- Edit/delete question options
+- Question categories
+- Import/export questions
+
+#### 3.6 Reports (`/admin/reports`)
+- User performance reports
+- Test statistics
+- System usage metrics
+- Export options (CSV, PDF)
+
+#### 3.7 Settings (`/admin/settings`)
+- System configuration
+- Email templates
+- Notification settings
+- Security settings
+
+## User Roles and Permissions
+
+### Guest
+- View public pages
+- Register
+- Login
+- Reset password
+
+### Student
+- Take tests
+- View results
+- Update profile
+- View notifications
+
+### Teacher
+- Create and manage own tests
+- View student results
+- Manage own question bank
+- Generate reports for own tests
+
+### Admin
+- Full system access
+- User management
+- Test management
+- System configuration
+- View all reports and analytics
+
+## UI Components
+
+### Common Components
+- **Navigation Bar** - Main site navigation
+- **Footer** - Copyright, links, etc.
+- **Notification Toast** - Temporary notifications
+- **Modal Dialogs** - Confirmations and alerts
+- **Breadcrumbs** - Page hierarchy navigation
+
+### Form Components
+- Text inputs
+- Select dropdowns
+- Radio buttons
+- Checkboxes
+- Date pickers
+- File uploads
+- Rich text editors
+
+### Data Display Components
+- Tables with sorting and filtering
+- Cards for content display
+- Charts and graphs for analytics
+- Pagination controls
+- Loading indicators
+
+## Color Scheme
+
+- **Primary**: Indigo (#4F46E5)
+- **Secondary**: Light Blue (#38BDF8)
+- **Accent**: Green (#10B981)
+- **Warning**: Yellow (#F59E0B)
+- **Danger**: Red (#EF4444)
+- **Neutral**: Gray (#6B7280)
+- **Background**: Light Gray (#F3F4F6)
+- **Text**: Dark Gray (#1F2937)
+
+## Typography
+
+- **Headings**: Inter, sans-serif
+- **Body**: Inter, sans-serif
+- **Code**: Monospace
+
+## Responsive Design
+
+- **Desktop**: 1200px and above
+- **Tablet**: 768px to 1199px
+- **Mobile**: 767px and below
+
+## Routes Reference
+
+### Authentication Routes
+- `GET /login` - Login page
+- `POST /login` - Process login
+- `GET /register` - Registration page
+- `POST /register` - Process registration
+- `GET /logout` - Logout user
+- `GET /forgot-password` - Forgot password page
+- `POST /forgot-password` - Process password recovery
+- `GET /reset-password/:token` - Reset password page
+- `POST /reset-password/:token` - Process password reset
+
+### User Routes
+- `GET /` - Home/dashboard
+- `GET /tests` - Available tests
+- `GET /tests/take/:id` - Take a test
+- `POST /tests/submit/:id` - Submit test answers
+- `GET /tests/results/:id` - View test results
+- `GET /profile` - User profile
+- `POST /profile` - Update profile
+- `GET /notifications` - User notifications
+- `POST /notifications/read/:id` - Mark notification as read
+
+### Admin Routes
+- `GET /admin/dashboard` - Admin dashboard
+- `GET /admin/users` - User management
+- `GET /admin/users/:id` - View/edit user
+- `POST /admin/users/:id` - Update user
+- `DELETE /admin/users/:id` - Delete user
+- `GET /admin/tests` - Test management
+- `GET /admin/tests/add` - Add new test
+- `GET /admin/tests/edit/:id` - Edit test
+- `POST /admin/tests/create` - Create new test
+- `PUT /admin/tests/update/:id` - Update test
+- `DELETE /admin/tests/delete/:id` - Delete test
+- `GET /admin/questions` - Question bank
+- `GET /admin/reports` - Reports and analytics
+- `GET /admin/settings` - System settings
+
+## API Endpoints
+
+### Authentication API
+- `POST /api/auth/login` - Authenticate user
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/forgot-password` - Request password reset
+- `POST /api/auth/reset-password` - Reset password
+
+### Tests API
+- `GET /api/tests` - Get all tests
+- `GET /api/tests/:id` - Get test details
+- `POST /api/tests/create` - Create new test
+- `PUT /api/tests/update/:id` - Update test
+- `DELETE /api/tests/delete/:id` - Delete test
+- `POST /api/tests/:id/submit` - Submit test answers
+- `GET /api/tests/:id/results` - Get test results
+
+### Users API
+- `GET /api/users` - Get all users
+- `GET /api/users/:id` - Get user details
+- `PUT /api/users/:id` - Update user
+- `DELETE /api/users/:id` - Delete user
+- `GET /api/users/:id/results` - Get user test results
+
+### Questions API
+- `GET /api/questions` - Get all questions
+- `GET /api/questions/:id` - Get question details
+- `POST /api/questions` - Create new question
+- `PUT /api/questions/:id` - Update question
+- `DELETE /api/questions/:id` - Delete question
+
+## Implementation Notes
+
+### Technology Stack
+- **Frontend**: HTML, CSS (Tailwind CSS), JavaScript
+- **Backend**: Node.js, Express.js
+- **Database**: MySQL
+- **Template Engine**: EJS
+- **Authentication**: Session-based with bcrypt
+
+### Security Considerations
+- Password hashing with bcrypt
+- CSRF protection
+- XSS prevention
+- Input validation
+- Rate limiting
+- Session management
+- Secure cookies
+
+### Performance Optimization
+- Database indexing
+- Query optimization
+- Caching strategies
+- Asset minification
+- Lazy loading
+
+## Future Enhancements
+
+1. **Real-time Features**
+   - Live notifications
+   - Collaborative test creation
+   - Real-time test monitoring
+
+2. **Advanced Analytics**
+   - Performance prediction
+   - Learning pattern analysis
+   - Recommendation engine
+
+3. **Content Enhancements**
+   - Rich media questions
+   - Interactive questions
+   - AI-generated questions
+
+4. **Integration Options**
+   - LMS integration
+   - SSO support
+   - API expansion
+
+5. **Mobile Applications**
+   - Native iOS app
+   - Native Android app
+   - Offline test taking 

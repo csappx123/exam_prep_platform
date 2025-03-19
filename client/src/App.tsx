@@ -22,6 +22,7 @@ function Router() {
       <ProtectedRoute path="/tests" component={TestsPage} />
       <ProtectedRoute path="/tests/take/:id" component={TakeTestPage} />
       <ProtectedRoute path="/tests/results/:id" component={TestResultsPage} />
+      <ProtectedRoute path="/profile" component={ProfilePage} />
       
       {/* Admin routes */}
       <ProtectedRoute 

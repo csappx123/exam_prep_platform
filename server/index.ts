@@ -4,6 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
+import logger, { LogCategory } from "./logger";
 
 const app = express();
 app.use(express.json());
@@ -49,12 +50,12 @@ async function hashPassword(password: string) {
 
 // Create initial test data if not exists
 async function setupInitialData() {
-  log("Setting up initial test data...");
+  logger.info(LogCategory.SYSTEM, "Setting up initial test data...");
   
   // Check if admin user exists
   const existingAdmin = await storage.getUserByEmail("admin@meritorious.edu");
   if (existingAdmin) {
-    log("Initial data already exists. Skipping setup.");
+    logger.info(LogCategory.SYSTEM, "Initial data already exists. Skipping setup.");
     return;
   }
   
@@ -67,7 +68,7 @@ async function setupInitialData() {
     role: "admin",
     dateOfBirth: new Date("1990-01-01")
   });
-  log("Created admin user: admin@meritorious.edu");
+  logger.info(LogCategory.USER, "Created admin user: admin@meritorious.edu", { userId: admin.id });
   
   // Create regular user
   const userPassword = await hashPassword("User123!");
@@ -78,7 +79,7 @@ async function setupInitialData() {
     role: "user",
     dateOfBirth: new Date("1995-05-05")
   });
-  log("Created regular user: user@meritorious.edu");
+  logger.info(LogCategory.USER, "Created regular user: user@meritorious.edu", { userId: user.id });
   
   // Create teacher user
   const teacherPassword = await hashPassword("Teacher123!");
@@ -89,7 +90,7 @@ async function setupInitialData() {
     role: "teacher",
     dateOfBirth: new Date("1985-03-15")
   });
-  log("Created teacher user: teacher@meritorious.edu");
+  logger.info(LogCategory.USER, "Created teacher user: teacher@meritorious.edu", { userId: teacher.id });
   
   // Create a math exam
   const mathExam = await storage.createExam({
@@ -101,6 +102,7 @@ async function setupInitialData() {
     isActive: true,
     createdBy: teacher.id
   });
+  logger.info(LogCategory.EXAM, "Created exam: Mathematics Fundamentals", { examId: mathExam.examId });
   
   // Create a section for the math exam
   const algebraSection = await storage.createSection({
@@ -108,6 +110,10 @@ async function setupInitialData() {
     name: "Algebra",
     description: "Basic algebraic equations and expressions",
     position: 1
+  });
+  logger.info(LogCategory.EXAM, "Created section: Algebra", { 
+    sectionId: algebraSection.sectionId,
+    examId: mathExam.examId
   });
   
   // Create a question for the section
@@ -120,7 +126,18 @@ async function setupInitialData() {
     marks: "5",
     solutionText: null
   });
+  logger.info(LogCategory.QUESTION, "Created question", { 
+    questionId: algebraQuestion.questionId,
+    sectionId: algebraSection.sectionId
+  });
   
+  logger.info(LogCategory.SYSTEM, "Basic test data created successfully");
+  
+  // Keep the old log format for consistency in console output
+  log("Setting up initial test data...");
+  log("Created admin user: admin@meritorious.edu");
+  log("Created regular user: user@meritorious.edu");
+  log("Created teacher user: teacher@meritorious.edu");
   log("Basic test data created successfully");
 }
 
@@ -156,6 +173,7 @@ async function setupInitialData() {
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
+    logger.info(LogCategory.SERVER, `Server started successfully on port ${port}`);
     log(`serving on port ${port}`);
   });
 })();

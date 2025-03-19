@@ -60,7 +60,7 @@ export interface IStorage {
   createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationAsRead(notificationId: number): Promise<boolean>;
   
-  sessionStore: any; // Use 'any' to avoid type issues
+  sessionStore: ReturnType<typeof createMemoryStore>;
 }
 
 export class MemStorage implements IStorage {
@@ -82,7 +82,7 @@ export class MemStorage implements IStorage {
   private answerIdCounter: number;
   private notificationIdCounter: number;
   
-  sessionStore: session.SessionStore;
+  sessionStore: ReturnType<typeof createMemoryStore>;
   
   constructor() {
     this.usersMap = new Map();

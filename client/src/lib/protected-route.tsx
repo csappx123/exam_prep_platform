@@ -19,7 +19,7 @@ export function ProtectedRoute({
     return (
       <Route path={path}>
         <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-border" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </Route>
     );
@@ -33,20 +33,23 @@ export function ProtectedRoute({
     );
   }
 
-  // Check if role is allowed if allowedRoles is specified
-  if (allowedRoles && !allowedRoles.includes(user.role as 'user' | 'teacher' | 'admin')) {
+  // Check if the user has the required role
+  if (allowedRoles && user.role && !allowedRoles.includes(user.role)) {
     return (
       <Route path={path}>
-        <div className="flex flex-col items-center justify-center min-h-screen p-4">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Access Denied</h1>
-          <p className="text-gray-600 text-center mb-6">
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+          <p className="text-gray-600">
             You don't have permission to access this page.
           </p>
-          <Redirect to="/" />
         </div>
       </Route>
     );
   }
 
-  return <Route path={path} component={Component} />;
+  return (
+    <Route path={path}>
+      <Component />
+    </Route>
+  );
 }

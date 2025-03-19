@@ -330,10 +330,19 @@ export class MemStorage implements IStorage {
       answerId, 
       createdAt,
       isCorrect: false,
-      marksObtained: 0
+      marksObtained: "0"  // Use string for score to match schema
     };
     this.answersMap.set(answerId, newAnswer);
     return newAnswer;
+  }
+  
+  async updateUserAnswer(answerId: number, answerData: Partial<UserAnswer>): Promise<UserAnswer | undefined> {
+    const answer = this.answersMap.get(answerId);
+    if (!answer) return undefined;
+    
+    const updatedAnswer = { ...answer, ...answerData };
+    this.answersMap.set(answerId, updatedAnswer);
+    return updatedAnswer;
   }
   
   // Notification Operations

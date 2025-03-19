@@ -307,7 +307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let obtainedMarks = 0;
       
       for (const answer of answers) {
-        const question = await storage.questionsMap.get(answer.questionId);
+        const question = await storage.getQuestionById(answer.questionId);
         if (!question) continue;
         
         totalMarks += Number(question.marks) || 0;
@@ -327,12 +327,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Update answer with correctness and marks
-        const marksObtained = isCorrect ? Number(question.marks) : 0;
-        obtainedMarks += marksObtained;
+        const marksObtained = isCorrect ? question.marks : "0";
+        obtainedMarks += isCorrect ? (Number(question.marks) || 0) : 0;
         
         // Update answer in storage
-        await storage.answersMap.set(answer.answerId, {
-          ...answer,
+        await storage.updateUserAnswer(answer.answerId, {
           isCorrect,
           marksObtained
         });
@@ -343,7 +342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update attempt with score
       const scoredAttempt = await storage.updateAttempt(attemptId, {
-        score: scorePercentage
+        score: scorePercentage.toString()
       });
       
       // Create a notification
@@ -411,7 +410,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get questions and options for each answer
       const answersWithDetails = await Promise.all(answers.map(async (answer) => {
-        const question = await storage.questionsMap.get(answer.questionId);
+        const question = await storage.getQuestionById(answer.questionId);
         if (!question) return null;
         
         const options = await storage.getOptionsByQuestionId(question.questionId);
